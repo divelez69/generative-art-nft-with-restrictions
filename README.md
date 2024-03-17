@@ -58,11 +58,15 @@ In this version, we’ve improved efficiency by separating trait set generation 
 
 **Clone this repository**
 
-`git clone https://github.com/divelez69/generative-art-nft-with-restrictions.git`
+```
+git clone https://github.com/divelez69/generative-art-nft-with-restrictions.git
+```
 
 **Install required packages**
 
-`pip install Pillow pandas progressbar2`
+```
+pip install Pillow pandas progressbar2
+```
 
 ## Configuration
 
@@ -76,7 +80,9 @@ PNG trait filenames in the `assets` folder must be in "Title Style". For example
 
 To re-style the PNG filenames, run the following command in your console:
 
-`python nft.py rename`
+```
+python nft.py rename
+```
 
 This tool will assist you in re-styling all PNG filenames and may help you detect typos so you can correct them on the spot.
 
@@ -96,7 +102,9 @@ Setup the `RESTRICTIONS_CONFIG` in `restrictions.py`. This is a crucial step for
 
 If all previous setups are done correctly, execute:
 
-`python nft.py`
+```
+python nft.py
+```
 
 ...and you'll be guided to smoothly produce the avatar images you need...
 
