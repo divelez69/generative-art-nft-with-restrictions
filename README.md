@@ -118,7 +118,11 @@ I understand that this part of the process may seem daunting and challenging. Ho
 
 **JSON metadata generation**
 
-In order to generate JSON metadata, define BASE_NAME, BASE_IMAGE_URL, and BASE_JSON in `metadata.py`. Make the necessary adjustments according to the specifications of the platform and network you chose to launch your NFTs. Then, run `python metadata.py`.
+In order to generate JSON metadata, define BASE_NAME, BASE_IMAGE_URL, and BASE_JSON in `metadata.py`. Make the necessary adjustments according to the specifications of the platform and network you chose to launch your NFTs. Then, run:
+
+```
+python metadata.py
+```
 
 ## About Pepeiyans, also known as TheCarlos
 
