@@ -58,7 +58,7 @@ In this version, we’ve improved efficiency by separating trait set generation 
 
 **Clone this repository**
 
-`git clone https: << here goes the new repository >>`
+`git clone https://github.com/divelez69/generative-art-nft-with-restrictions.git`
 
 **Install required packages**
 
