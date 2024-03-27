@@ -67,10 +67,10 @@ def fix_trait(trait):
 
 # Re-style name to "A Title Style", but keep the upparcase words intact
 def title_style(name):
-    words = name.split(' ')
+    words = name.split()
     idxs = [i for i, tr in  enumerate(words) if tr.isupper()]
     name = name.title()
-    words = name.split(' ')
+    words = name.split()
     for i in idxs:
         words[i] = words[i].upper()
     name = ' '.join(words)
@@ -83,9 +83,9 @@ def title_style(name):
 # Make trait name compatible with PNG filename
 def fix_trait_name(name, tr_name):
     """
-    Name traits should coincide with their PNG equivalents. By default, we adpopt: "The Title Style". The only exception is when a whole word is in uppercase, for example: 'LED" in "LED Glasses".
+    Trait names should coincide with their PNG equivalents. To minimize missmatches, the script reshapes both of them to "The Title Style". The only exception is when a whole word is in uppercase, for example: 'LED" in "LED Glasses".
 
-    Traits filenames can be anything, but in order to be compatible with RESTRICTIONS_CONFIG must adopt this rule. On the other hand, trait names given in the RESTRICTIONS_CONFIG don't necessarly need to comply. This function re-styles to "Title Style" but preserving the uppercase words.
+    This function re-styles to "Title Style" but preserving the uppercase words.
     """
 
     # None is a valid trait and means the absence of a trait...
@@ -106,7 +106,7 @@ def fix_trait_name(name, tr_name):
     if tr_name not in NAMES[name]['traits']:
 
         err_msg = "\nFailed to find '%s' trait in '%s' layer:\n\nEither trait doesn't exist or is misspelled. Please check the trait where its PNG should be and the RESTRICTIONS_CONFIG.\n" % (tr_name, name)
-        err_msg_cont = "\nFor better results, traits PNG filenames should be 'In Title Style', except if a word is all uppercase, for example 'LED' in 'LED Sunglasses'.\nThe script tries to do its best to match given traits in 'RESTRICTIONS_CONFIG' with filenames, but many times it requires you to fix PNGs manually.\nIf the task is too recurrent or you have too many traits filenames to fix, consider run 'python nft.py rename' in your console.\n"
+        err_msg_cont = "\nTo minimize missmatches, the script internally renames traits to 'Title Stile', except if a word is all uppercase, for example 'LED' in 'LED Sunglasses'.\n"
         e = ValueError(err_msg + err_msg_cont)
 
         # Pass fixed name trait and err msg through exception object before raising it
@@ -124,6 +124,9 @@ def map_assets():
     # Loop through all layers defined in CONFIG
     for layer in CONFIG:
 
+        # Re-style the name for aesthetic purposes
+        layer['name'] = title_style(layer['name'])
+
         # Go into assets/ to look for layer folders
         layer_path =os.path.join(ASSETS_DIR, layer['directory'])
 
@@ -135,6 +138,9 @@ def map_assets():
             traits = [fix_trait(filename) for filename in traits]
         except ValueError as e:
             raise ValueError("%s One found in folder '%s'" % (str(e), layer_path))
+        
+        # Make traits "Title Style"
+        traits = [title_style(trait) for trait in traits]
 
         # map in a dictionary the traits, quantity + other relevant data from CONFIG
         names_map[layer['name']] = {
@@ -249,7 +255,7 @@ def get_traits_from_one_item_dict(name, traits_dict):
 
     except ValueError as e:
 
-        # Inform the user through an error if some traits don't exist or match with PNG files
+        # Inform the user through an error if some traits don't exist or failed to match with PNG files
         raise ValueError("%s\nOriginal string: %s" % (e, str(traits_dict)))
     
     except Exception as e:
@@ -320,12 +326,19 @@ def check_subrestriction_list(sub_restr):
     while sub_restr:
         trait_pair = sub_restr.pop()
 
-        # Raise exception if string is giving. It must be a tuple or similar
+        # Raise exception if string or dictionary is giving. It must be a tuple or similar
         if type(trait_pair) is str:
             raise ValueError("'%s': Expected a (name, trait) tuple or similar. String alone isn't valid." % trait_pair)
+        
+        if type(trait_pair) is dict:
+            raise ValueError("'%s': Expected a (name, trait) tuple or similar. In this case, when the trait-pairs set are given in a list (or equivalent), the trait-pair inner items must be in the form of a tuple. Dictionaries aren't allowed." % trait_pair)
 
-        # Destruct trait_pair. 'traits' can be single trait as a string or a list of traits
-        name, traits = trait_pair
+        try:
+            # Destruct trait_pair. 'traits' can be single trait as a string or a list of traits
+            name, traits = trait_pair
+
+        except Exception as e:
+            raise ValueError("<<%s>>: %s" % (trait_pair, str(e)))
 
         # Collect names not found to raise Exception later
         if name not in NAMES:
@@ -381,7 +394,7 @@ def parse_single_restriction(restriction):
         if len(sub_restr) == 0:
             raise ValueError("%sIs empty." % err_msg(jdx, sub_restr))
 
-        # Make a copy to inform user in case of of Exceptions. Original sub_restr will be modified
+        # Make a copy to inform user in case of Exceptions. Original sub_restr will be modified
         subr_copy = sub_restr.copy()
 
         # Call the appropiate process depending the subr type
@@ -888,218 +901,6 @@ def setup_restrictions():
     
     return restr_WD
 
-
-# Parse traits filenames and suggest re-styling them to "A Title Style"
-def rename_traits_filenames():
-    """
-    The corresponding PNG filenames of traits found in RESTRICTIONS_CONFIG must be 'In Title Style'
-    For example, the file "red ape.png" must be renamed "Red Ape.png" for the restrictions configuration to work even though, in the RESTRICTIONS_CONFIG is written 'red ape' too. However, it is not required to rename traits in the RESTRICTIONS_CONFIG most of the time. The script will do its best to match. The purpose of this script is to help users to look for all traits filenams that need to be re-style or correct typos.
-    """
-
-    print()
-    print("Thanks for calling 'nft.py rename'.")
-
-    # The first part of the task is to collect mismatches and make an informe
-    informe = {}
-
-    # Loop through the NAMES dictionary, since those traits are based in the original PNG filenames
-    for name, dt in NAMES.items():
-
-        # Loop through traits names for each layer name
-        for trait in dt['traits']:
-
-            try:
-
-                # Fixes trait name to a "Title Style" and look for its PNG equivalent
-                # in case of a missmatch, it'll raise an exception
-                fix_trait_name(name, trait)
-
-            except ValueError as e:
-
-                # Make an inform of the missmatch
-                if name not in informe:
-                    informe[name] = {'actual': [], 'proposed': []}
-
-                # Collect the name that missmatched
-                informe[name]['actual'].append(trait)
-
-                # Collect the suggested name. This was passed in by the Exception object
-                informe[name]['proposed'].append(e.trait_name)
-
-    if informe:
-
-        print("...filenames that need to be renamed were found while parsing the PNG files.")
-        print("---------------------------------------------------------------------------------")
-        print("To randomly create avatars, PNG traits can have any name, and there's no particular style that needs to be enforced. However, when we want to establish restriction rules, it's easy to encounter mismatches between the trait names given in the RESTRICTIONS_CONFIG and the actual trait filenames. Whether due to typos or different writing styles, this usually lead to confusions. For this reason, we adopt the rule that trait filenames should follow 'The Title Style.' The 'nft.py' script can still create random avatars even if trait filenames don't strictly adhere to this style, as long as they don't participate in any restriction.")
-        print()
-        print("Although filenames must be 'In Title Style,' their corresponding names in the RESTRICTIONS_CONFIG don't necessarily need to match that style. The script will do its best to automatically match them, but unfortunately, it may occasionally fail at this task. This 'rename' script you're calling is designed to identify such mismatches issues and address them with your help.")
-        print()
-        print("Before we start renaming files, remember that they should be 'In Title Style'. For example: 'red ape.png' should be renamed 'Red Ape.png'. The only exception is when the name has an entire word in uppercase. For instance, 'LED glasses.png' should be renamed 'LED Glasses.png'.")
-        print()
-
-        # Collect changes input by user
-        user_accepted_changes = {}
-
-        # Loop through all mismatches collected in informe
-        for name, trts in informe.items():
-
-            # Directory path were current mismatch PNGs is located
-            layer_path = os.path.join(ASSETS_DIR, NAMES[name]['directory'])
-
-            # Collect the changes user wants
-            while True:
-
-                print('=' * 90)
-                print("Layer '%s': PNG filenames in '%s' that need to be renamed or re-styled:" % (name, layer_path))
-                print()
-                print("             Enter blank input to ommit proposed changes.")
-                print("             Please, copy and paste proposed changes and then edit specific changes you wish.")
-                print("             If you don't want to change a name, write '_' (underscore) in its place instead.")
-                print()
-                print("             ==> Actual names     : %s" % ", ".join(trts['actual']))
-                print("             ==> Proposed changes : %s" % ", ".join(trts['proposed']))
-                print("             " + '-' * 82)
-
-                # User provides a comma separated string of new names to change
-                new_traits_str = input("With same order, input new names : ")
-
-                # No changes are collected if user inputs blank spaces.
-                if new_traits_str.strip() == '':
-                    break
-
-                # Make a list of new names changes clean of spaces, and '_'s for no changes
-                new_traits_lst = list(map(str.strip, new_traits_str.split(',')))
-                new_traits_lst = [ '_' if fn.strip('_') == '' else fn for fn in new_traits_lst ]
-
-                # New given names number must match the older ones... the '_'s count as names
-                if len(trts['actual']) == len(new_traits_lst):
-
-                    # Remove the '_'s (underscores) to look for repeated names
-                    clean_lst = [name for name in new_traits_lst if name != '_']
-
-                    # if length in the list doesn't match its set's length, there are repeated
-                    if len(clean_lst) == len(set(clean_lst)):
-
-                        # Same number of names and no repeated ones, but...
-                        # ...check if there aren't already existing names
-                        existing = [fn + '.png' for fn in new_traits_lst if os.path.exists(os.path.join(layer_path, fn + '.png'))]
-
-                        if existing:
-
-                            # Yep! There are already files with those names.  Can't proceed!
-                            msg = "The following filenames '%s' in '%s' already exist. Try different names." % (', '.join(existing), layer_path)
-
-                        else:
-
-                            # Finally, those are new filenames that don't exist. Can proceed!
-                            user_accepted_changes[name] = {'old': trts['actual'], 'new': new_traits_lst}
-                            break
-
-                    else:
-
-                        # Repeated names were found. Can't accept them!
-                        msg = "You are repeating some names"
-
-                else:
-
-                    # No equal number of names were given. Can't accept that!
-                    msg = "You must provide the same number of comma separated names"
-
-                # Inform user the issue 
-                print()
-                print("   ===>  %s   <===" % msg)
-                input("         Press Enter to continue...")
-                print()
-
-        if user_accepted_changes:
-
-            # inform the changes about to happen before executing
-            print()
-            print()
-            print("These are the filename changes you just aproved.")
-            print("Please, review them carefully before you proceed. Once you aprove, you can't undo changes.")
-            print()
-
-            # Tabulations and formats for the information table that follows
-            tab = (35, 2, 34,  30)
-            f = "{:<%i}{:<%i}{:<%i}{:<%i}" % tab
-            line = "%s%s%s" % ('-' * tab[0], '|', '-' * (sum(tab[1:]) - 1)) 
-
-            print(line)
-            print(f.format('FROM DIRECTORY', '|', 'CURRENT FILENAME', 'CHANGE TO NEW FILENAME'))
-            
-            # Edit user accepted changes before proceeding
-            final_changes = []
-
-            # Loop through the changes user aproved to display a table and edit final changes in a list
-            for name, change in user_accepted_changes.items():
-
-                # This line is at the start of a new layer's category
-                print(line)
-
-                # This flag is to help display each directory path once per group
-                new_dir = True
-
-                # Get the path were the changes are going to happen
-                layer_path = os.path.join(ASSETS_DIR, NAMES[name]['directory'])
-
-                # Loop through the pairs of changes (old, new) excluding the '_'s
-                for old, new in [(old, new) for old, new in zip(change['old'], change['new']) if new != '_']:
-
-                    # Fix the filenames
-                    old += '.png'
-                    new += '.png'
-
-                    # Save next change paths from old filename to new
-                    final_changes.append( 
-                        (os.path.join(layer_path, old), os.path.join(layer_path, new)) 
-                        )
-
-                    # Display a new row in table using the formats and tabulations
-                    print(
-                        f.format(
-                            layer_path if new_dir else "", 
-                            '|', 
-                            "%s%s%s%s" % (old, ' ' * 4, '-' * (tab[-2] - len(old) - 6), '> '), 
-                            new
-                        ))
-
-                    # Set to False to not display directory more than one on table
-                    new_dir = False
-
-            # This line closes the displayed table
-            print(line)
-            print()
-                    
-            if final_changes:
-
-                # This loop ends when user aproves or denies changes
-                while True:
-
-                    resp = input("Confirm you want these filename changes (Y/N):")
-
-                    if resp == 'N' or resp == 'n':
-                        quit()
-
-                    if resp == 'Y' or resp == 'y':
-                        break
-
-                # Proceed with changes
-                for change in final_changes:
-                    os.rename(*change)
-
-                print('Succesful rename of files!')
-
-            else:
-                print("No changes took place.")
-
-        else:
-            print("No changes took place.")
-
-    else:
-
-        print("No changes needed in traits filenames...")
-        print("It's all good!")
 
 #------------------------------------------------------------------------------------
 # End of Public Functions

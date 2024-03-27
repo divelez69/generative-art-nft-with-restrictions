@@ -189,25 +189,17 @@ There's no limit to the number of restrictions within the whole set. Each restri
 
 # Final Note on Trait Names and Filenames:
 
-When working with the `RESTRICTIONS_CONFIG`, it's crucial to ensure that references to traits match their corresponding file names within the `'assets'` subdirectories. For instance, if a restriction mentions the `“LED sunglasses”` trait, there must be a corresponding `“LED Sunglasses.png”` file in the appropriate assets subdirectory. Failure to do so will result in a `ValueError` exception being raised during script execution.
+When working with the `RESTRICTIONS_CONFIG`, it is crucial to ensure that references to traits align with their corresponding file names within the `‘assets’` subdirectories. For instance, if a restriction mentions the `“LED Sunglasses”` trait, there must be a corresponding `“LED Sunglasses.png”` file in the appropriate `‘assets’` subdirectory. Failing to do so will result in a `ValueError` exception being raised during script execution.
 
-Unfortunately, these mismatches between trait names and filenames are quite common and can pose a challenge when running the script for the first time. You'll likely need to manually address this issue by debugging and cleaning up the data beforehand. However, this trade-off is well worth it because it ultimately leads to the creation of beautiful and pristine NFTs.
+Unfortunately, these mismatches between trait names and filenames are common and can pose a challenge when running the script for the first time. You will likely need to manually address this issue by debugging and cleaning up the data beforehand. However, this trade-off is well worth it because it ultimately leads to the creation of beautiful and pristine NFTs.
 
-While it's impossible to completely avoid these hurdles, we've taken steps to simplify the process. Here are the measures taken:
+To minimize these hurdles, the script internally re-styles trait filenames and their references (within `RESTRICTIONS_CONFIG`) to a “Title Style” form. For example, if a trait named `“brown leather.png”` is referenced as `“Brown leather”`, both will be re-styled to `“Brown Leather”`, thus ensuring a match. The only exception is that, while re-styling, if a whole word in uppercase is found, it remains unchanged. For instance, `“LED sunglasses.png”` will be re-styled as `“LED Sunglasses”`.
 
-1. Trait PNG filenames must be in a consistent “Title Style”. For instance, if a trait filename is `“brown leather.png”`, it should be renamed to `“Brown Leather.png”`. This consistency ensures smooth script execution. The only exception to this rule is when a word within the filename is entirely uppercase. In this case `“LED sunglasses.png.”` it should be renamed to `“LED Sunglasses.png"`.
+This feature also corrects the excess of blank spaces, a common typo. For example, `“blue       Mujin .png”` (with a space before the `'.png'` extension) will be re-styled as `“Blue Mujin”`. However, other typos, such as attempting to reference `“cigarr”` (with two `'r'`) to `“cigar.png”`, must be manually addressed.
 
-1. Unlike filenames, trait names specified within the `RESTRICTIONS_CONFIG` do not necessarily have to adhere strictly to the title case rule. They will be fine, as long as the script can easily adjust them appropriately. For instance, trait names like `“brown leather”` and `“LED sunglasses” `need not be explicitly changed. Unfortunately, the script cannot automatically correct typos in filenames or trait names referenced within the `RESTRICTIONS_CONFIG`. For example, the filename `“Hapy Old Cigar.png”` (with a single “p”), it must be manually corrected.
+Although this feature isn’t flawless in addressing all typos and mismatches, it significantly simplifies the overall process by relieving the need to reference the PNG filenames exactly as they are written. Importantly, the re-styling feature doesn’t alter PNG filenames; however, you will see the improvements reflected in the JSON files’ metadata, enhancing their aesthetic.
 
-1. The script includes a convenient tool to rename all PNG filenames at once. Execute the following command in your console:
-
-   ```
-   python nft.py rename
-   ```
-
-   This tool detects filenames requiring restyling and suggests appropriate changes. You can approve or disapprove these adjustments through simple copy-paste tasks. By running this tool, you can also address the majority of typos in the PNG filenames. While it streamlines the process, keep in mind that some manual effort is still involved.
-
-   I encourage you to run this 'renaming' tool during your initial setup of `RESTRICTIONS_CONFIG` and before attempting to generate images. Take your time to re-style filenames and fix all typos. Once you've addressed these issues, subsequent adjustments won't be necessary. You can then focus on creating stunning NFT avatars with accurate rarity weights.
+---
 
 Now, unleash your creativity and dive into your NFT projects! Feel free to share your feedback and project links. I'd love to see what you build.
 

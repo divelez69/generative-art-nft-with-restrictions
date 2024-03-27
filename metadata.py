@@ -38,12 +38,12 @@ from config import JSON_DIR, ZEROS_PAD
 # 
 # Base metadata for Lighthouse. It must be edited too:
 
-BASE_NAME = "Scrappy Squirrel #"
+BASE_NAME = "Pepeiyans #"
 
 BASE_JSON = {
     "name": BASE_NAME,
-    "symbol": "SSQ",
-    "description": "The most fun and bizarre squirrels of misty forest",
+    "symbol": "PPY",
+    "description": "The funny Pepeiyan's warrior frogs",
     "image": "",
     "edition": None,
     "attributes": [],

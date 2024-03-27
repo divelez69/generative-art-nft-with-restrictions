@@ -6,7 +6,7 @@
 # Here I provide you with an example of a restriction configuration to work with given assets sample.
 # Take your time to understand the whole restriction setup structure.
 # Take notice of the following:
-    # > The RESTRICTIONS_CONFIG is a list of three inner lists
+    # > The RESTRICTIONS_CONFIG is a list of three inner lists (in this case)
     # > Each inner list is a restriction. Thus, this whole restrictions setup is composed by 3 individual restrictions.
     # > Each inner restrictions is composed by two items: that can be a list or a dictionary:
         # >> Each of these items are in fact a reference to a group of trait pairs.

@@ -15,13 +15,24 @@ from progressbar import progressbar
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-from restriction_code import parse_restrictions, setup_restrictions, rename_traits_filenames, fix_trait, is_valid_trait, title_style
+from restriction_code import parse_restrictions, setup_restrictions, fix_trait, is_valid_trait, title_style
 
 # These are general settings imports. Please review them in config.py
 from config import CONFIG, ASSETS_DIR, IMGS_DIR, ZEROS_PAD
 
 # GLOBALS:
 RESTRICTIONS = {} # It will be updated with final restrictions' workable dictionary
+
+# To minimize missmatches, trait name references within RESTRICTIONS and
+# PNG trait filenames are re-styled to 'Title Style'
+# The following map will relate the real PNG filename with its re-styled trait name
+# Its structure:
+#   {
+#       'name_1': {'Trait Name 1': 'trait name 1.png, 'Trait Name 2': 'trait name 2.png'... }
+#       'name_2': {'Trait Name 1': 'trait name 1.png, 'Trait Name 2': 'trait name 2.png'... }
+#       ...
+#   }
+trait_file = {}
 
 
 # Parse the configuration file and make sure it's valid
@@ -33,11 +44,23 @@ def parse_config():
     # Loop through all layers defined in CONFIG
     for layer in CONFIG:
 
+        # Improve the aesthetic as it is going to be shown in the metadata
+        layer['name'] = title_style(layer['name'])
+
         # Go into assets/ to look for layer folders
         layer_path = os.path.join(ASSETS_DIR, layer['directory'])
         
-        # Get trait array in sorted order
-        traits = sorted([trait for trait in os.listdir(layer_path) if trait[0] != '.'])
+        # Make a reference of fixed and re-styled trait names to PNG trait filenames
+        trait_name = {
+            title_style(fix_trait(tr_file)): tr_file \
+                for tr_file in os.listdir(layer_path) if is_valid_trait(tr_file, layer_path)
+        }
+
+        # Update map: re-styled trait names to corresponding PNG trait filenames
+        trait_file[layer['name']] = trait_name
+
+        # Get trait (in 'Title Style') array in sorted order
+        traits = sorted(trait_name.keys())
 
         # If layer is not required, add a None to the start of the traits array
         if not layer['required']:
@@ -51,8 +74,7 @@ def parse_config():
         elif layer['rarity_weights'] == 'file':
 
             # Get rarities from a CSV file
-            rarities, new_csv = get_rarities_from_csv(layer)
-            assert len(traits) == len(rarities), "The number of rarity weights extracted from '%s.csv' doesn't match current project. Edit the csv file or consider erasing it to run the script again to create a new one from scratch." % layer['name']
+            rarities, new_csv = get_rarities_from_csv(layer, traits)
             
             # Collect CSV filename only if newly created
             if new_csv:
@@ -74,8 +96,31 @@ def parse_config():
     return new_CSVs
 
 
+# "get_rarities_from_csv" helper function:
+# Look for all possible 'none', 'nonE', 'noNe', ...'NONE' as keys and extract the first value found
+def get_value_from_none_key(wd):
+
+    # Transform input binary number into its equivalent: 0000 => none, 0001 => nonE, 0010 => noNe, etc
+    get_non_str = lambda b: ''.join([c if b[j] == '0' else c.upper() for j, c in enumerate('none')])
+
+    # Parse the 16 in binaries: 0000, 0001, 0010, ...1111
+    for i in range(16):
+
+        # Get a form of 'none' given a binary number from 0 to 15 
+        none_str = get_non_str('{0:04b}'.format(i))
+
+        # Extract and return the first 'none' key found's value
+        try:
+            return wd[none_str]
+        except Exception:
+            continue
+
+    else:
+        raise KeyError("Not any 'none' found")
+
+
 # Get rarity weights from CSV file
-def get_rarities_from_csv(layer):
+def get_rarities_from_csv(layer, traits):
 
     # Rarities CSVs folder
     rar_dir = 'rarity weights'
@@ -84,7 +129,7 @@ def get_rarities_from_csv(layer):
     if not os.path.exists(rar_dir):
         os.mkdir(rar_dir)
     elif not os.path.isdir(rar_dir):
-        raise NotADirectoryError("'%s' isn't a directory." % rar_dir)
+        raise NotADirectoryError("'%s' exists and isn't a directory. Please delete or rename it." % rar_dir)
     
     # CSV filepath:
     csv_filename = layer['name'] + '.csv' 
@@ -93,68 +138,48 @@ def get_rarities_from_csv(layer):
     # Make a new CSV file if it doesn't exist
     if not os.path.exists(csv_file_path):
 
-        # Get all valid traits from directory in sorted order and fix them
-        traits = sorted(
-            [
-                fix_trait(trait) for trait in os.listdir(os.path.join(ASSETS_DIR, layer['directory'])) \
-                if is_valid_trait(trait, layer['directory'])
-                ]
-            )
-        
-        # Check if there are traits in no "Title Style"
-        no_title_style =  [tr != title_style(tr) for tr in traits].count(True) > 0
-        
-        # If layer is not required, add a 'none' to the start of the traits array
-        if not layer['required']:
-            traits = ['none'] + traits
-
-        # Don't create new CSV file if filenames are in no "Title Style"
-        # Future filenames re-namings may potentially screw-up everything, because...
-        # ...rarity weights are fetched in alphabetical order
-        if not no_title_style:
-
-            # Export to a CSV
-            df = pd.DataFrame(traits, columns = ['Trait'])
-            df['Weight'] = 1
-            df.to_csv(csv_file_path, index=False)
+        # Export to a CSV
+        df = pd.DataFrame(['none'] + traits[1:] if traits[0] is None else traits, columns = ['Trait'])
+        df['Weight'] = 1
+        df.to_csv(csv_file_path, index=False)
 
         # Return all traits with a preloaded default value of 1 + the new CSV filename
-        return [1] * len(traits), (csv_filename, no_title_style)
-    
+        return [1] * len(traits), csv_filename
 
     # A CSV is found. Read the file and extract the weights
-    df = pd.read_csv(csv_file_path, na_filter=False)
     try:
+        df = pd.read_csv(csv_file_path, na_filter=False)
         wd = dict(zip(df['Trait'], df['Weight']))
 
-    except KeyError as e:
-        raise KeyError("%s: Failed to extract rarity weights from '%s'. Consider erasing the CSV and run this script again to create a new one from scratch."  % (str(e), csv_filename))
+    except Exception as e:
+        err_msg = "%s: Failed to extract rarity weights from '%s'. The file may be corrupted. Consider erasing the CSV and run this script again to create a new one from scratch."  % (str(e), csv_filename)
+        raise type(e)(err_msg)
     
+    err_msg =  "The number of rarity weights extracted from '%s.csv' doesn't match current project.\nEdit the csv file or consider erasing it and run the script again to create a new one from scratch." % csv_filename
+    assert len(traits) == len(wd), err_msg
 
-    # Extract all keys with all forms of none: nonE, noNe, noNE,... None, ...NONE
-    # and collect the value of only one of them
-
-    # Transform input binary number into its equivalent: 0000 => none, 0001 => nonE, 0010 => noNe, etc
-    get_non_str = lambda b: ''.join([c if b[j] == '0' else c.upper() for j, c in enumerate('none')])
+    # Initialize a weights list with the weight value corresponding to a 'None' if exists
+    try:
+        weights = [ get_value_from_none_key(wd) ]
+    except KeyError:
+        weights = []
+        init = 0
+    else:
+        init = 1
     
-    # Initialize empty list in case no form of 'none' is found
-    weights = [] 
+    # Extract the rest of the weights in sorted order
+    missmatch = [] # <-- collect here the missmatches
+    for trait in sorted(traits[init:]):
+        try:
+            # Traits must match the CSVs Trait
+            weights.append( wd[trait] )
+        except KeyError:
+            # Collect the missmatch
+            missmatch.append(trait)
 
-    # Parse the 16 in binaries: 0000, 0001, 0010, ...1111
-    for i in range(16):
-
-        # Get a form of 'none' given a binary number from 0 to 15 
-        none_str = get_non_str('{0:04b}'.format(i))
-
-        # Extract the given 'none' key value, remove and initialize a list 
-        if none_str in wd:
-
-            # The none value goes at the start of the weights list if exists
-            weights = [ wd.pop(none_str) ]
-
-
-    # Put the rest of rarity values (keys in alphabetical order)
-    weights.extend( list( zip( *sorted( wd.items() ) ) )[1] )
+    err_msg = "Some of the trait names in the '%s' didn't match with the traits in the '%s' folder. These are '%s'. Seems the CSV has been corrupted. Consider to delete it and run the script again to build a new one from scratch. Save previous weight's data before proceeding." \
+        % (csv_filename, ASSETS_DIR, "', '".join(missmatch))
+    assert len(missmatch) == 0, err_msg
 
     # Return the extracted weights and None, because it's not a new CSV file
     return weights, None
@@ -185,17 +210,6 @@ def generate_single_image(filepaths, output_filename=None):
         if not os.path.exists(os.path.join('output', 'single_images')):
             os.makedirs(os.path.join('output', 'single_images'))
         bg.save(os.path.join('output', 'single_images', str(int(time.time())) + '.png'))
-
-
-# Generate a single image with all possible traits
-# generate_single_image(['Background/Green.png', 
-#                        'Body/Brown.png', 
-#                        'Expressions/Standard.png',
-#                        'Head Gear/Std_crown.png',
-#                        'Shirt/Blue_dot.png',
-#                        'Misc/Pokeball.png',
-#                        'Hands/Standard.png',
-#                        'Wristband/Yellow.png'])
 
 
 # Get total number of distinct possible combinations
@@ -247,7 +261,7 @@ def generate_paths_set_from_traits(traits_set):
 
         # skip the none trait. There's no PNG equivalent
         if (trait.lower() != 'none') and (trait is not None):
-            trait_path = os.path.join(CONFIG[idx]['directory'], trait + '.png')
+            trait_path = os.path.join(CONFIG[idx]['directory'], trait_file[CONFIG[idx]['name']][trait])
             traits_path.append(trait_path)
 
     return traits_path
@@ -312,7 +326,7 @@ def generate_imgs_table(count, prog_bar=False):
         # Populate the rarity table with metadata of newly created image
         for idx, trait in enumerate(trait_sets):
             if trait is not None:
-                rarity_table[CONFIG[idx]['name']].append(trait[: -1 * len('.png')])
+                rarity_table[CONFIG[idx]['name']].append(trait)
             else:
                 rarity_table[CONFIG[idx]['name']].append('none')
 
@@ -336,7 +350,6 @@ def generate_imgs_table(count, prog_bar=False):
     if prog_bar:
         end_time = time.time()
         print("...depuration completed in %s seconds!" % ("{:2.2f}".format(end_time - init_time)))
-        print()
 
     return rarity_table
 
@@ -418,12 +431,18 @@ def generate_exact_imgs_table(count):
                     quit()
 
         # Try up to 10 times to get the missing traits dataset to fill the 'count' requested
-        for _ in range(10):
+        for i in range(10):
 
             # Get the size for next table.
             next_table_size = math.ceil((count - master_rt.shape[0]) / (mean - 2 * stDev))
 
-            print("Generating the metadata for %s images. We need them to produce the %s distinct and valid avatars you request..." % (next_table_size, count))
+            print("We have already %i distintict and aproved avatars." % (master_rt.shape[0]))
+            print("Due to an assertion rate of {:.2f}%, we have to generate {} aditional image data to fulfill the {} requested."\
+                  .format(mean * 100, next_table_size, count))
+            print("Remember that not all data images generated are incorpotated, because some are duplicates or fail to pass the restriction rules.")
+            print("We have a 97.50% probability to acomplish the goal in the next atempt.")
+            print()
+            print("Attempt %i of 10: Generating %i new images data..." % (i + 1, next_table_size))
 
             # Generate the next table and concatenate to the master one
             # With given stats, we expect 97.5% chances to get enough depurated traits dataset in the first attempt
@@ -433,6 +452,7 @@ def generate_exact_imgs_table(count):
 
             # Check if we reach the goal
             if master_rt.shape[0] >= count:
+                print()
                 break
 
             else:
@@ -442,14 +462,15 @@ def generate_exact_imgs_table(count):
                 # However, the newly traits dataset have been integrated
                 # Try again only for the remaing. 
                 # There's a 97.5% chance that next iteration will fullfill
-                pass
+                print("Last generated table wasn't enough to produce the avatar images requested.")
+                print()
 
         else:
 
-            # It fails to get the missing data. Is virtually impossible. End the task
-            print("Failed to generate the required images.")
-            print("Execution aborted!")
-            quit()
+            # It fails to get the missing data. Is virtually impossible.
+            print("After 10 attempts it wasn't possible to generate a table for all images required.")
+            print("Only %i distinct and valid images will be be produced." % master_rt.shape[0])
+            print()
 
     # Modify final rarity table to reflect removals
     master_rt.reset_index(inplace=True)
@@ -467,10 +488,6 @@ def generate_images(edition, count):
     # Define output path to output/edition {edition_num}
     op_path = os.path.join('output', 'edition ' + str(edition), IMGS_DIR)
 
-    # Will require this to name final images as 000, 001,...
-    # later on, these zeros will be removed if Zeroes Padding is set to False
-    zfill_count = len(str(count - 1))
-
     # Create output directory if it doesn't exist
     if not os.path.exists(op_path):
         os.makedirs(op_path)
@@ -478,6 +495,14 @@ def generate_images(edition, count):
     # Generate a table with exact 'count' rows, distinct and valid avatar imgs.
     # No further depuration is required
     rarity_table = generate_exact_imgs_table(count)
+
+    # Adjust the number of expected images if complete required table generation fails 
+    if rarity_table.shape[0] < count:
+            count = rarity_table.shape[0]
+
+    # Will require this to name final images as 000, 001,...
+    # later on, these zeros will be removed if Zeroes Padding is set to False
+    zfill_count = len(str(count - 1))
 
     print("Generating %s images..." % count)
 
@@ -528,38 +553,9 @@ def manage_new_CSVs(new_csvs):
         print()
         return
 
-    # New CSVs created while parsing the config were detected.
-    csvs, no_styles = tuple(zip(*new_csvs))
-
-    # Filter out CSVs with trait filenames that don't adhere to the "Title Style"
-    csv_with_no_title_styles = list(np.array(csvs)[np.array(no_styles)])
-    if csv_with_no_title_styles:
-
-        # Actually these CVS files haven't been created. No need to delete anything
-        # Alert user about them
-        print('=' * 80)
-        print("EXECUTION ABORTED!!")
-        print()
-        print("During the process of creating new CSV files, it was identified that certain PNG trait filenames do not adhere to the ‘Title Style’. This inconsistency may lead to incorrect rarity weight assignments and produce output that is challenging to detect and debug. The following CSVs were not generated due to this issue: '%s'" % "', '".join(csv_with_no_title_styles))
-        print()
-        print("Please, run in your console: 'python nft.py rename'")
-        print()
-        print("This tool will assist you in restyling all PNG filenames and help you detect most of the typos. Once the filenames are in the new style, you can proceed with creating the CSVs and adjusting the rarity weights. It’s highly recommended to not configure rarity weights until properly styled and definitive PNG trait filenames are in place.”")
-        print()
-        print("WARNING:")
-        print("After creating the CSVs, avoid modifying the trait references within them (...of course you can edit the rarity weights!). Equally important, refrain from changing the PNG filenames. If you must make changes, ensure that you replace the existing CSVs with new ones. To do this, delete the current CSVs and rerun the ‘python nft.py’ script. Keep in mind that rarity weights are extracted from the CSVs in alphabetical order. Any alterations may adversely impact your project!")
-        print()
-        print("To gain a deeper understanding of the trait names referenced within RESTRICTIONS_CONFIG and the trait filenames, I recommend reading the final section of the RESTRICTIONS_TUTORIAL.md.")
-        print()
-
-        # Abort execution. User must re-style PNG filenames beforehand
-        quit()
-
-    # All filenames adhere to the "Title Style", but...
-    # ...it may be convenient to edit them before generating avatars
     print("Assets are fine, but new rarity-weights' CSV files has been created.")
     print()
-    print("These are: '%s'" % "', '".join(csvs))
+    print("These are: '%s'" % "', '".join(new_csvs))
     print()
     print("By default, weights in all CSV traits have been assign with the value of 1.")
     print("You may wish to edit them before continue with the avatars creation.")
@@ -568,30 +564,16 @@ def manage_new_CSVs(new_csvs):
     # Get a response from user
     while True:
         resp = input("Despite the advice, do you want to continue? (Y/N)")
-        if resp == 'y' or resp == 'Y':
+        if resp.lower() == 'y':
             break # user decided to keep with the task
 
-        elif resp == 'n' or resp == 'N':
+        elif resp.lower() == 'n':
             print("Execution aborted!")
             quit()
         
 
 # Main function. Point of entry
 def main():
-
-    # Given 'rename' arg  (python nft.py rename) --> aids user to re-style traits filenames:
-    # Traits filenames should be 'In Title Sytle' to be compatible with RESTRICTIONS_CONFIG
-    input_args = sys.argv
-    if len(input_args) > 1:
-
-        if len(input_args) > 2:
-            raise TypeError("Invalid number of arguments. Only 'rename' is valid.") 
-        
-        if input_args[1] == 'rename':
-            rename_traits_filenames()
-            quit()
-
-        raise TypeError("'%s' is not recognized." % input_args[1])
 
     # Prepare traits information and rarities weights
     print("Checking assets...")
@@ -609,10 +591,12 @@ def main():
     RESTRICTIONS.update(setup_restrictions())
 
     tot_comb = get_total_combinations()
-    print("You can create a total of %i distinct avatars" % (tot_comb))
+    print("A total of %i of distinct trait combinations has been calculated.\nNot all of them can be transformed into avatars."  % (tot_comb))
+    print("The output number will be less, and it will depend on the severity of the 'RESTRICTIONS_CONFIG' settings.")
     print()
 
-    print("How many avatars would you like to create? Enter a number greater than 0: ")
+    print("How many avatars would you like to create? We will try to acomplish exactly your request.")
+    print("Enter a number greater than 0: ")
     while True:
         num_avatars = int(input())
         if num_avatars > 0:
@@ -622,6 +606,7 @@ def main():
     edition_name = input()
 
     print("Starting task...")
+    print()
     rt = generate_images(edition_name, num_avatars)
 
     print("Saving metadata...")

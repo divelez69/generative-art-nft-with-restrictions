@@ -38,11 +38,7 @@ Each layer needs to specify the following:
 
                 => The number of traits within the CSV depends on how the 'required' flag is set. If it's set to True, then the number of traits must match the count of traits in the layer's category. However, if it's set to False, the CSV should include one additional 'none' trait.
 
-                => The trait names within the CSV file should match the corresponding trait filenames in the assets category. It's important to note that this matching is not strictly enforced. The script will still function as long as the number of traits matches on both sides. However, keep in mind that the rarity weights list sequence is determined based on the alphabetical order of traits within the CSV. To prevent any potential mistakes, it's recommended to allow the script to create the CSV file automatically during its initial run. For this purpose, before executing the script, ensure that any existing CSV files are deleted.
-
-                ==>  If you’re relying on the automatic creation of CSV files by running the 'python nft.py' script for the first time (which is the recommended approach), please make sure to re-style the PNG trait filenames beforehand. Run the 'python nft.py rename' script right after you upload the traits to the ‘assets’ folder. This step will assist you in the renaming process. This is important because if you re-style the names later, you may accidentally change the alphabetical order. The same advice applies if you rely on a simple array for the rarity weights.
-
-                Trait PNG filenames must be in "Title Style" in order to match to references within the RESTRICTIONS_CONFIG. For further details on this topic, please refer to the relevant section in the RESTRICTIONS_TUTORIAL.md.
+                => The trait names within the CSV file should match the corresponding trait filenames in the 'assets' folder, but re-styled to 'Title Style'. Don't worry, the script does the re-styling for you. However, once CSVs are created don't modify the 'Traits', otherwise it won't be able to read the data. You should focus only on the rarity weigths.
 
 Be sure to check out the tutorial in the README for more details.                
 """
@@ -86,7 +82,7 @@ CONFIG = [
         'name': 'Accessory Behind',
         'directory': 'Accessory Behind',
         'required': False,
-        'rarity_weights': None
+        'rarity_weights': 'file'
     },
     {
         'id': 3,

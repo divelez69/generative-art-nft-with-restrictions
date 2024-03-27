@@ -24,9 +24,9 @@ This repository includes a functionality for generating JSON metadata for your N
 
 ### Fuzzy friendly
 
-Even if you’re not familiar with programming (whether in Python or any other language), you can still utilize this library. Currently, you can refer to the tutorial for the original version: [Tutorial](https://medium.com/scrappy-squirrels/tutorial-create-generative-nft-art-with-rarities-8ee6ce843133). Additionally, a tutorial for this updated and enhanced version is currently in progress.
+Even if you’re not familiar with programming (whether in Python or any other language), you can still utilize this library. A tutorial for this updated and enhanced version is currently in progress.
 
-While the original version’s tutorial still holds some relevance for this new and improved version, I recommend focusing on the dedicated sections that highlight the new features. Take the time to explore the specific tutorials provided here to fully leverage the enhancements. Since there isn’t yet a dedicated tutorial on Medium for this enhanced version, paying close attention to the specific instructions below, in this file, is especially important.
+Indeed, there exists a tutorial for the original version of this code, which does not include the `RESTRICTIONS_CONFIG` feature. While that tutorial retains some relevance for this new and improved version, I strongly recommend directing your attention to the dedicated sections that highlight the new features. Take the time to explore the specific tutorials provided here to fully leverage the enhancements. Since there isn’t yet a dedicated tutorial on Medium for this enhanced version, paying close attention to the specific instructions below, in this file, is especially important.
 
 ## ENHANCED VERSION by Diego E. Velez: Feb, 29th 2024:
 
@@ -72,25 +72,11 @@ pip install Pillow pandas progressbar2
 
 **Setup initial configuration**
 
-Begin by uploading your input assets to the `assets` folder. Next, complete the `config.py` file by carefully following the instructions provided within it. However, do not run the `python nft.py` script just yet, especially if you’re relying on CSV files to determine the rarity weights.
-
-**Re-style PNG Trait Filenames**
-
-PNG trait filenames in the `assets` folder must be in "Title Style". For example, a "red ape.png" trait should be renamed to "Red Ape.png". Although this requirement was not present in previous version, it has become necessary in this one because traits referenced within `RESTRICTIONS_CONFIG` must match PNG trait filenames. Unfortunately, this uncomfortable situation is an unavoidable trade-off in order to end up with beautiful and clean avatar images, thanks to the implemented restrictions configuration feature.
-
-To re-style the PNG filenames, run the following command in your console:
-
-```
-python nft.py rename
-```
-
-This tool will assist you in re-styling all PNG filenames and may help you detect typos so you can correct them on the spot.
-
-CAUTION: Once re-styled, refrain from changing the trait PNG filenames later.
+Begin by uploading your input assets to the `assets` folder. Next, complete the `config.py` file by carefully following the instructions provided within it.
 
 **Setup Rarities**
 
-Setup the `rarity weights`. You can simply fill up arrays for each category, but I encourage you to use CSV files. Set the value for `'rarity_weights'` to `'file'` within `config.py`, and then run `python nft.py` for the first time (please, make sure you have re-styled PNG filenames first). This will automatically create the CSVs for you. Stop the execution, so you can edit the CSVs using your preferred spreadsheet software. If needed, you can delete a CSV file and run the script again to create a new one with preloaded values.
+Setup the `rarity weights`. You can simply fill up arrays for each category, but I encourage you to use CSV files. Set the value for `'rarity_weights'` to `'file'` within `config.py`, and then run `python nft.py` for the first time. This will automatically create the CSVs for you. Stop the execution, so you can edit the CSVs using your preferred spreadsheet software. If needed, you can delete a CSV file and run the script again to create a new one with preloaded values.
 
 **Setup restriction rules**
 
@@ -108,13 +94,11 @@ python nft.py
 
 ...and you'll be guided to smoothly produce the avatar images you need...
 
-However, it's very unlikely that you'll be succesful in the first attempts. If you’ve set up restriction rules, the script may encounter mismatches, typos, or code errors in the `RESTRICTIONS_CONFIG` within the `restrictions.py` file. It’s crucial that the trait references in the `RESTRICTIONS_CONFIG` match their corresponding PNG filenames. Thankfully, you’ve already restyled the filenames by running `python nft.py rename,` so most of the typos and mismatches will fall within the `RESTRICTIONS_CONFIG`. There's no need to adhere to the "Title Style" in this data structure. The script will do its best to match, but typos will require you to fix manually.
+However it’s unlikely that you’ll achieve immediate success in your initial attempts, because setting up restriction rules can be quite a complex endeavor. The script may encounter mismatches, typos, or code errors within the `RESTRICTIONS_CONFIG` located in `restrictions.py` file. These issues require debugging.
 
-In case, you discover typos within the PNG trait filenames that need to be fixed, be aware that correction may alter the alphabetical order. If that's the case, delete the related CSV file and run the `python nft.py` script to re-build it. Make sure to have saved any rarity weights values beforehand.
+To mitigate these challenges, the script internally re-styles trait PNG filenames and their references within `RESTRICTIONS_CONFIG` to a “Title Style” format. This automatic re-styling resolves the majority of mismatches. However, some typos may still need manual attention during various iterations.
 
-To minimize code errors while building the restrictions, please read the `RESTRICTIONS_TUTORIAL.md` carefully.
-
-I understand that this part of the process may seem daunting and challenging. However, I encourage you to persevere. By clearly establishing the necessary trait combination restrictions, you’ll ultimately create beautiful and clean avatar images.
+I understand that this process may appear daunting and challenging, but I encourage you to persevere. By clearly defining the necessary trait combination restrictions, you will ultimately create beautiful and clean avatar images.
 
 **JSON metadata generation**
 
