@@ -8,6 +8,8 @@ The `generative-art-nft-with-restrictions` repository is a library for creating 
 
 This enhanced version is based on a previous iteration coded by Rounak Banik, originally developed to generate NFT avatars and collectible projects. The improved version was specifically used to create the artwork for the [Pepeiyans (also known as TheCarlos)](https://x.com/pepeiyans?s=20) project in SEI Network.
 
+With the propper adjustments, this code can also be used for NFT creation for Solana, Ethereum, Radix, Cosmos, etc.
+
 ## Features (Original version legacy)
 
 ### Generate over a million distinct images with less than 60 traits
