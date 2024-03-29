@@ -6,9 +6,7 @@ by Diego E. Velez (Feb, 2024)
 
 The `generative-art-nft-with-restrictions` repository is a library for creating generative art with a programmable restrictions feature that prevents mixing incompatible traits within the same artwork.
 
-This enhanced version is based on a previous iteration coded by Rounak Banik, originally developed to generate NFT avatars and collectible projects. The improved version was specifically used to create the artwork for the [Pepiyans (also known as TheCarlos)](https://x.com/pepeiyans?s=20) project in SEI Network.
-
-This code is designed to be blockchain agnostic. By making appropriate adjustments to `metadata.py`, you can theoretically create NFT avatars to deploy on any blockchain, such as Ethereum, Solana, Cosmos, Avalanche, Radix, and more. Remember to conduct your own research.
+This enhanced version is based on a previous iteration coded by Rounak Banik, originally developed to generate NFT avatars and collectible projects. The improved version was specifically used to create the artwork for the [Pepiyans (also known as TheCarlos)](https://x.com/pepeiyans?s=20) project.
 
 ## Features (Original version legacy)
 
@@ -34,7 +32,7 @@ Indeed, there exists a tutorial for the original version of this code, which doe
 
 ### Background:
 
-While exploring resources, I stumbled upon an impressive Python codebase authored by Rounak Banik (rounakbanik). This codebase was used to generate over 3000 collection NFTs known as the [Pepiyans (AKA TheCarlos)](https://x.com/pepeiyans?s=20). The NFT images in this collection were crafted from 219 base traits spread across 8 categories, resulting in an astonishing number of possible avatars—over a billion!
+While exploring resources, I stumbled upon an impressive Python codebase authored by Rounak Banik (rounakbanik). This codebase was used to generate over 3000 collection NFTs known as the [Pepeiyans (AKA TheCarlos)](https://x.com/pepeiyans?s=20). The NFT images in this collection were crafted from 219 base traits spread across 8 categories, resulting in an astonishing number of possible avatars—over a billion!
 
 However, I discovered that manipulating rarity weights using data arrays wasn’t enjoyable or efficient. Moreover, the original version lacked a crucial feature: preventing unwanted trait combinations. As a consequence, the resulting avatar images were chaotic, disorganized, and frankly unappealing. Driven by this realization, I set out to enhance the original code, and here’s what I came up with:
 
