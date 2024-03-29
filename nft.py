@@ -44,9 +44,6 @@ def parse_config():
     # Loop through all layers defined in CONFIG
     for layer in CONFIG:
 
-        # Improve the aesthetic as it is going to be shown in the metadata
-        layer['name'] = title_style(layer['name'])
-
         # Go into assets/ to look for layer folders
         layer_path = os.path.join(ASSETS_DIR, layer['directory'])
         

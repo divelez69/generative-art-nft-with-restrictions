@@ -6,7 +6,9 @@ by Diego E. Velez (Feb, 2024)
 
 The `generative-art-nft-with-restrictions` repository is a library for creating generative art with a programmable restrictions feature that prevents mixing incompatible traits within the same artwork.
 
-This enhanced version is based on a previous iteration coded by Rounak Banik, originally developed to generate NFT avatars and collectible projects. The improved version was specifically used to create the artwork for the [Pepiyans (also known as TheCarlos)](https://x.com/pepeiyans?s=20) project.
+This enhanced version is based on a previous iteration coded by Rounak Banik, originally developed to generate NFT avatars and collectible projects. The improved version was specifically used to create the artwork for the [Pepiyans (also known as TheCarlos)](https://x.com/pepeiyans?s=20) project in SEI Network.
+
+This code is designed to be blockchain agnostic. By making appropriate adjustments to `metadata.py`, you can theoretically create NFT avatars to deploy on any blockchain, such as Ethereum, Solana, Cosmos, Avalanche, Radix, and more. Remember to conduct your own research.
 
 ## Features (Original version legacy)
 
@@ -96,7 +98,7 @@ python nft.py
 
 However it’s unlikely that you’ll achieve immediate success in your initial attempts, because setting up restriction rules can be quite a complex endeavor. The script may encounter mismatches, typos, or code errors within the `RESTRICTIONS_CONFIG` located in `restrictions.py` file. These issues require debugging.
 
-To mitigate these challenges, the script internally re-styles trait PNG filenames and their references within `RESTRICTIONS_CONFIG` to a “Title Style” format. This automatic re-styling resolves the majority of mismatches. However, some typos may still need manual attention during various iterations.
+To mitigate these challenges, the script internally re-styles trait PNG filenames and their references within `RESTRICTIONS_CONFIG` to a “Title Style” format. This automatic re-styling resolves the majority of mismatches. However, some typos may still need manual attention during various iterations. It's important to note that this re-styling feature only works for traits, not for layer names. Be sure that layer names match those defined within `CONFIG` in `config.py`.
 
 I understand that this process may appear daunting and challenging, but I encourage you to persevere. By clearly defining the necessary trait combination restrictions, you will ultimately create beautiful and clean avatar images.
 

@@ -124,9 +124,6 @@ def map_assets():
     # Loop through all layers defined in CONFIG
     for layer in CONFIG:
 
-        # Re-style the name for aesthetic purposes
-        layer['name'] = title_style(layer['name'])
-
         # Go into assets/ to look for layer folders
         layer_path =os.path.join(ASSETS_DIR, layer['directory'])
 
@@ -151,8 +148,6 @@ def map_assets():
         }
 
     return names_map
-
-
 
 
 ####################################################################################
@@ -268,6 +263,29 @@ def get_traits_from_one_item_dict(name, traits_dict):
         return traits_seq if flag else list(NAMES[name]['traits'] - set(traits_seq))
 
 
+# Return a std error message with a list of names not found
+def no_names_error_message(no_names):
+
+    # no_names -->  Is a list of names not found
+    n = len(no_names)
+
+    # Transform list into an aesthetic comma separated string
+    if n ==1 :
+        no_names_str = "'%s'" % no_names[0]
+    else:
+        no_names_str = "'%s'" % "', '".join(no_names[:-1])
+        no_names_str += " and '%s'" % no_names[-1]
+
+    # Build the message to return
+    err_msg = "The following %s not exist: %s." % ("name does" if n == 1 else "names do", no_names_str)
+    err_msg += "\n"
+    err_msg += "The name(s) of the provided name/trait pairs within RESTRICTIONS_CONFIG must match the layer names defined in CONFIG (config.py)"
+    err_msg += "\n"
+    err_msg += "It’s possible that they don’t actually exist or that there is a simple misspelling bug."
+
+    return err_msg
+
+
 # Layer's name categories and its traits are organized in a key/value pair structure
 def check_subrestrictions_dict(sub_restr):
 
@@ -306,7 +324,8 @@ def check_subrestrictions_dict(sub_restr):
 
     # Inform the user through an Exception if non-existent names were given
     if no_names:
-        raise ValueError("The following names doesn't exist: '%s" % "', ".join(no_names))
+        # raise ValueError("The following names doesn't exist: '%s" % "', ".join(no_names))
+        raise ValueError(no_names_error_message(no_names))
 
     # Delete all collected names that contain {'all': False}
     while garbage_items:
@@ -370,7 +389,7 @@ def check_subrestriction_list(sub_restr):
 
     # Raise exception to inform the user about names that don't exist
     if no_names:
-        raise ValueError("The following names don't exist: '%s" %  "', ".join(no_names))
+        raise ValueError(no_names_error_message(no_names))
     
     # Replenish subrestriction with valid and check name/trait pairs
     sub_restr.extend(new_subr)
