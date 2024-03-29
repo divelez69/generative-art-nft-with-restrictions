@@ -6,7 +6,9 @@ by Diego E. Velez (Feb, 2024)
 
 The `generative-art-nft-with-restrictions` repository is a library for creating generative art with a programmable restrictions feature that prevents mixing incompatible traits within the same artwork.
 
-This enhanced version is based on a previous iteration coded by Rounak Banik, originally developed to generate NFT avatars and collectible projects. The improved version was specifically used to create the artwork for the [Pepiyans (also known as TheCarlos)](https://x.com/pepeiyans?s=20) project.
+This enhanced version is based on a previous iteration coded by Rounak Banik, originally developed to generate NFT avatars and collectible projects. The improved version was specifically used to create the artwork for the [Pepiyans (also known as TheCarlos)](https://x.com/pepeiyans?s=20) project in SEI Network.
+
+This tool is designed to be blockchain-agnostic. By making the necessary adjustments in `metadata.py`, you can theoretically create NFTs that are compatible with any network out there, including Ethereum, Solana, Avalanche, Cosmos, Radix, and more. Remember to conduct your own research.
 
 ## Features (Original version legacy)
 
