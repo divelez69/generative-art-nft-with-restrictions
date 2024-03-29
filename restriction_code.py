@@ -324,7 +324,6 @@ def check_subrestrictions_dict(sub_restr):
 
     # Inform the user through an Exception if non-existent names were given
     if no_names:
-        # raise ValueError("The following names doesn't exist: '%s" % "', ".join(no_names))
         raise ValueError(no_names_error_message(no_names))
 
     # Delete all collected names that contain {'all': False}
