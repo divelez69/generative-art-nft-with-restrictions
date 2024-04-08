@@ -4,20 +4,6 @@ from  itertools import chain
 from restrictions import RESTRICTIONS_CONFIG
 from config import CONFIG, ASSETS_DIR
 
-
-# Globals Error Messages:
-####################################################################################
-_ERR_MSG_1 = """                     
-Error in the restriction of index %i:
-%s
-Given restriction %s.
-The restriction MUST be a list of TWO components: The left and right sets of trait pairs. They can be either a list or a dictionary.                           
-"""
-
-_ERR_MSG_GENERIC = """
-Error in the restriction of index %i.
-%s
-"""
 ####################################################################################
 
 # GLOBALS
@@ -32,7 +18,6 @@ NAMES = {}
 #------------------------------------------------------------------------------------
 # Public Helper Funcions:
 #
-
 
 # Check if given filename is a valid trait
 def is_valid_trait(trait_filename, layer_path):
@@ -827,26 +812,45 @@ def check_for_all_none_issues(restr_WD):
 # Parse RESTRICTIONS_CONFIG from restrictions.py and make sure is valid
 def parse_restrictions():
 
+    # The whole set of restrictions must be a list (or tuple) of individual restrictions
     if not (type(RESTRICTIONS_CONFIG) is list or type(RESTRICTIONS_CONFIG) is tuple):
-        raise ValueError("RESTRICTIONS_CONFIG: expected list or tuple")
+        raise ValueError("'RESTRICTIONS_CONFIG': expected list or tuple")
+    
+    # Error messages templates:
+
+    restr_form_err_msg = \
+        "\n" + \
+        "Error in the restriction of index %i:\n" + \
+        "%s\n" + \
+        "Given restriction %s.\n" + \
+        "The restriction MUST be a list of TWO components: The left and right sets of trait pairs. They can be either a list or a dictionary." + \
+        "\n"
+    
+    generic_err_msg = \
+        "\n" + \
+        "Error in the restriction of index %i.\n" + \
+        "%s" + \
+        "\n"
+        
 
     # Loop through all restrictions in RESTRICTIONS_CONFIG list
     for idx, restriction in enumerate(RESTRICTIONS_CONFIG):
 
-        # Restriction must have two subrestriction components: Subr. Setters and Subr. Getters
+        # Restriction must be a list
         if type(restriction) is not list:
-            raise ValueError(_ERR_MSG_1 % (idx, "-----", "is '%s'" % str(restriction)))
+            raise ValueError(restr_form_err_msg % (idx, "-----", "is '%s'" % str(restriction)))
 
+        # Restriction must be a list of two components
         r_len = len(restriction)
         if r_len != 2:
-            raise ValueError(_ERR_MSG_1 % (idx, str(restriction), \
+            raise ValueError(restr_form_err_msg % (idx, str(restriction), \
                                          'is empty' if r_len == 0 else "has %i items" % r_len))
         
         try:
             parse_single_restriction(restriction)
 
         except ValueError as e:
-            raise ValueError(_ERR_MSG_GENERIC % (idx, e))
+            raise ValueError(generic_err_msg % (idx, e))
 
     # If code reach this line, is wonderful!
     return None
